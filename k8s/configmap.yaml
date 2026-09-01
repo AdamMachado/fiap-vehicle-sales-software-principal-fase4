@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vehicle-sales-main-config
+  namespace: vehicle-sales
+data:
+  ASPNETCORE_URLS: http://+:8080
+  Keycloak__Authority: https://keycloak.example.com/realms/fiap-vehicle-sales
+  Services__SalesServiceUrl: http://vehicle-sales-api/
+  Services__TokenUrl: https://keycloak.example.com/realms/fiap-vehicle-sales/protocol/openid-connect/token
+  Services__ClientId: main-software

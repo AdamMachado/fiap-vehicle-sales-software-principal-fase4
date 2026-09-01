@@ -1,0 +1,39 @@
+@host = http://localhost:5001
+@adminToken = substitua-pelo-token-admin
+@vehicleId = substitua-pelo-id-retornado
+
+### Cadastrar veículo
+POST {{host}}/api/vehicles
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "brand": "Toyota",
+  "model": "Corolla",
+  "year": 2022,
+  "color": "Prata",
+  "price": 120000
+}
+
+### Editar veículo
+PUT {{host}}/api/vehicles/{{vehicleId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "brand": "Toyota",
+  "model": "Corolla XEi",
+  "year": 2022,
+  "color": "Preto",
+  "price": 118000
+}
+
+### Webhook de pagamento
+POST {{host}}/api/payments/webhook
+X-Webhook-Secret: payment-webhook-local-secret
+Content-Type: application/json
+
+{
+  "paymentCode": "codigo-retornado-na-compra",
+  "status": "Completed"
+}

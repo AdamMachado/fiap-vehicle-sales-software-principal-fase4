@@ -1,0 +1,39 @@
+services:
+  main-api:
+    build:
+      context: .
+      dockerfile: src/Fiap.VehicleSales.Main.Api/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__MainDb: Host=main-db;Port=5432;Database=vehicle_sales_main;Username=postgres;Password=postgres
+      Keycloak__Authority: http://localhost:8080/realms/fiap-vehicle-sales
+      Keycloak__MetadataAddress: http://host.docker.internal:8080/realms/fiap-vehicle-sales/.well-known/openid-configuration
+      Services__SalesServiceUrl: http://host.docker.internal:5000/
+      Services__TokenUrl: http://host.docker.internal:8080/realms/fiap-vehicle-sales/protocol/openid-connect/token
+      Services__ClientId: main-software
+      Services__ClientSecret: main-software-local-secret
+      Payments__WebhookSecret: payment-webhook-local-secret
+    ports:
+      - "5001:8080"
+    depends_on:
+      main-db:
+        condition: service_healthy
+
+  main-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: vehicle_sales_main
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - main_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vehicle_sales_main"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  main_data:

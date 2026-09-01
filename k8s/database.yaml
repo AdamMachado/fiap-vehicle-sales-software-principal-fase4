@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: vehicle-sales-main-db
+  namespace: vehicle-sales
+spec:
+  clusterIP: None
+  selector:
+    app: vehicle-sales-main-db
+  ports:
+    - port: 5432
+      targetPort: postgres
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vehicle-sales-main-db
+  namespace: vehicle-sales
+spec:
+  serviceName: vehicle-sales-main-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vehicle-sales-main-db
+  template:
+    metadata:
+      labels:
+        app: vehicle-sales-main-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: vehicle_sales_main
+            - name: POSTGRES_USER
+              value: main
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: vehicle-sales-main-secrets
+                  key: postgres-password
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U main -d vehicle_sales_main"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

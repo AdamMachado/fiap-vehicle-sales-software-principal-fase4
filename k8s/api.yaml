@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vehicle-sales-main-api
+  namespace: vehicle-sales
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vehicle-sales-main-api
+  template:
+    metadata:
+      labels:
+        app: vehicle-sales-main-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/adammachado/fiap-vehicle-sales-main-api:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: vehicle-sales-main-config
+          env:
+            - name: ConnectionStrings__MainDb
+              valueFrom:
+                secretKeyRef:
+                  name: vehicle-sales-main-secrets
+                  key: connection-string
+            - name: Services__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: vehicle-sales-main-secrets
+                  key: service-client-secret
+            - name: Payments__WebhookSecret
+              valueFrom:
+                secretKeyRef:
+                  name: vehicle-sales-main-secrets
+                  key: webhook-secret
+          readinessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vehicle-sales-main-api
+  namespace: vehicle-sales
+spec:
+  selector:
+    app: vehicle-sales-main-api
+  ports:
+    - port: 80
+      targetPort: http
