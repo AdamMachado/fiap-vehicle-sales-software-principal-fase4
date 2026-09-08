@@ -1,6 +1,6 @@
 # FIAP Vehicle Sales — Software Principal
 
-API principal da Fase 4 do Tech Challenge SOAT. Este repositório é responsável pelo catálogo administrativo e pelo webhook público de pagamentos. Listagens, reserva e compra ficam no repositório separado do serviço de vendas.
+API principal da Fase 4 do Tech Challenge SOAT. Este repositório é responsável pelo catálogo administrativo e pelo webhook público de pagamentos. Listagens, reserva e compra ficam no repositório separado do [serviço de venda de veículos](https://github.com/AdamMachado/fiap-vehicle-sales-Fase-4).
 
 ## Responsabilidades
 
@@ -34,13 +34,54 @@ Também aceita `Canceled`. Chamadas repetidas com o mesmo resultado são idempot
 
 ## Execução local
 
-O serviço de vendas e o Keycloak devem estar disponíveis nas portas `5000` e `8080`. Depois execute:
+Primeiro, clone e inicie o repositório do serviço de vendas, que também sobe o Keycloak:
 
 ```bash
+git clone https://github.com/AdamMachado/fiap-vehicle-sales-Fase-4.git
+cd fiap-vehicle-sales-Fase-4
 docker compose up -d --build
 ```
 
-A API principal ficará disponível em `http://localhost:5001` e seu PostgreSQL exclusivo usará a porta `5434`.
+O serviço de vendas e o Keycloak ficarão disponíveis nas portas `5000` e `8080`. Em outro diretório, clone e inicie este repositório:
+
+```bash
+git clone https://github.com/AdamMachado/fiap-vehicle-sales-software-principal-fase4.git
+cd fiap-vehicle-sales-software-principal-fase4
+docker compose up -d --build
+```
+
+A API principal ficará disponível em `http://localhost:5001`, o Swagger em `http://localhost:5001/swagger` e seu PostgreSQL exclusivo usará a porta `5434`.
+
+## Autenticação administrativa e Swagger
+
+O usuário de demonstração é importado pelo Keycloak do serviço de vendas:
+
+```text
+Usuário: admin@test.com
+Senha: 123456
+Role: admin
+```
+
+Obtenha o token no PowerShell:
+
+```powershell
+$adminTokenResponse = Invoke-RestMethod `
+  -Method Post `
+  -Uri "http://localhost:8080/realms/fiap-vehicle-sales/protocol/openid-connect/token" `
+  -ContentType "application/x-www-form-urlencoded" `
+  -Body @{
+    client_id = "vehicle-sales-api"
+    username = "admin@test.com"
+    password = "123456"
+    grant_type = "password"
+  }
+
+$adminTokenResponse.access_token
+```
+
+Acesse `http://localhost:5001/swagger`, clique em **Authorize** e informe somente o token. O Swagger acrescenta o prefixo `Bearer` automaticamente.
+
+As credenciais e secrets descritos aqui são exclusivamente para demonstração local e devem ser substituídos em qualquer ambiente publicado.
 
 ## Testes e cobertura
 
@@ -50,6 +91,10 @@ dotnet test --collect:"XPlat Code Coverage" --settings coverage.runsettings --re
 ```
 
 A cobertura consolidada atual é 96,67%. O GitHub Actions bloqueia o pipeline abaixo de 80% e publica imagem no GHCR somente após push/merge em `master`.
+
+## CI/CD e publicação
+
+O workflow valida restore, build, testes e cobertura em Pull Requests para `master`. Depois do merge/push em `master`, publica a imagem versionada no GitHub Container Registry. Os manifests em `k8s/` descrevem a implantação; a aplicação em um cluster público exige que o ambiente de destino e suas credenciais sejam configurados.
 
 ## Kubernetes
 
