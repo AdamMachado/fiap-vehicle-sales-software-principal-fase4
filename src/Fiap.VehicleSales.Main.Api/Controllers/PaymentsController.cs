@@ -18,11 +18,11 @@ public sealed class PaymentsController : ControllerBase
     public async Task<IActionResult> Webhook(
         [FromServices] ProcessPaymentWebhookUseCase useCase,
         [FromServices] IConfiguration configuration,
+        [FromHeader(Name = "X-Webhook-Secret")] string? provided,
         [FromBody] PaymentWebhookRequest request)
     {
-        var provided = Request.Headers["X-Webhook-Secret"].ToString();
         var expected = configuration["Payments:WebhookSecret"] ?? string.Empty;
-        if (!SecretsMatch(provided, expected)) return Unauthorized(new { message = "Webhook não autorizado." });
+        if (!SecretsMatch(provided ?? string.Empty, expected)) return Unauthorized(new { message = "Webhook não autorizado." });
 
         try
         {
