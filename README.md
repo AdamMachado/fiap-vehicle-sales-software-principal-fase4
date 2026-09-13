@@ -194,7 +194,7 @@ autorização e endpoints.
 
 ## CI/CD e publicação
 
-O workflow executa restore, build, testes e cobertura em Pull Requests para `master`. Depois do merge/push em `master`, publica no GHCR:
+O workflow executa restore, build, testes, validação da cobertura e do Docker Compose em Pull Requests para `main`. Depois do merge/push em `main`, publica a imagem no GHCR:
 
 ```text
 ghcr.io/adammachado/fiap-vehicle-sales-main-api:<commit-sha>
